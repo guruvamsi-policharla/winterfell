@@ -9,6 +9,7 @@ pub use traits::{ExtensibleField, ExtensionOf, FieldElement, StarkField};
 pub mod f128;
 pub mod f62;
 pub mod f64;
+pub mod f23;
 
 mod extensions;
 pub use extensions::{CubeExtension, QuadExtension};
