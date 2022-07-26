@@ -10,6 +10,7 @@ pub mod f128;
 pub mod f62;
 pub mod f64;
 pub mod f23;
+pub mod f23201;
 
 mod extensions;
 pub use extensions::{CubeExtension, QuadExtension};
