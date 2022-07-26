@@ -367,19 +367,11 @@ impl ExtensibleField<3> for BaseElement {
 
     #[inline(always)]
     fn frobenius(x: [Self; 3]) -> [Self; 3] {
-        let frobx1 = Self::mul_base(
-            [Self::new(6987367), Self::new(6546534), Self::new(6811034)],
-            x[1],
-        );
-        let frobx2 = Self::mul_base(
-            [Self::new(528998), Self::new(7163700), Self::new(793498)],
-            x[2],
-        );
-        [
-            (frobx1[0] + frobx2[0] + x[0]),
-            (frobx1[1] + frobx2[1]),
-            (frobx1[2] + frobx2[2]),
-        ]
+        let frobx1 = [Self::new(6987367), Self::new(6546534), Self::new(6811034)];
+        let frobx2 = [Self::new(528998), Self::new(7163700), Self::new(793498)];
+        let x1 = Self::mul_base(frobx1, x[1]);
+        let x2 = Self::mul_base(frobx2, x[2]);
+        [(x[0] + x1[0] + x2[0]), (x1[1] + x2[1]), (x1[2] + x2[2])]
     }
 }
 
