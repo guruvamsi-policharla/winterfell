@@ -113,11 +113,24 @@ impl FieldElement for BaseElement {
     #[allow(clippy::many_single_char_names)]
     fn inv(self) -> Self {
         // M-2 = 0x6fffff
-        let mut out = (self.square() * self).square();
-        for _ in 0..20 {
-            out = out.square() * self;
-        }
-        out
+        // addchain search 7340031
+        // addchain: best: opt(dictionary(sliding_window(32),continued_fractions(dichotomic)))
+        //     _10    = 2*1
+        //     _11    = 1 + _10
+        //     _110   = 2*_11
+        //     _11000 = _110 << 2
+        //     _11110 = _110 + _11000
+        //     x9     = _11110 << 4 + _11110 + 1
+        //     i15    = 2*x9 + x9 + _11
+        //     x11    = x9 + i15
+        //     return   (i15 + x11) << 11 + x11
+        let x11 = exp_acc::<1>(self, self);
+        let x110 = x11.square();
+        let x11110 = exp_acc::<2>(x110, x110);
+        let x9 = exp_acc::<4>(x11110, x11110) * self;
+        let i15 = exp_acc::<1>(x9, x9) * x11;
+        let x11 = x9 * i15;
+        exp_acc::<11>(i15 * x11, x11)
     }
 
     fn conjugate(&self) -> Self {
@@ -354,19 +367,11 @@ impl ExtensibleField<3> for BaseElement {
 
     #[inline(always)]
     fn frobenius(x: [Self; 3]) -> [Self; 3] {
-        let frobx1 = Self::mul_base(
-            [Self::new(6987367), Self::new(6546534), Self::new(6811034)],
-            x[1],
-        );
-        let frobx2 = Self::mul_base(
-            [Self::new(528998), Self::new(7163700), Self::new(793498)],
-            x[2],
-        );
-        [
-            (frobx1[0] + frobx2[0] + x[0]),
-            (frobx1[1] + frobx2[1]),
-            (frobx1[2] + frobx2[2]),
-        ]
+        let frobx1 = [Self::new(6987367), Self::new(6546534), Self::new(6811034)];
+        let frobx2 = [Self::new(528998), Self::new(7163700), Self::new(793498)];
+        let x1 = Self::mul_base(frobx1, x[1]);
+        let x2 = Self::mul_base(frobx2, x[2]);
+        [(x[0] + x1[0] + x2[0]), (x1[1] + x2[1]), (x1[2] + x2[2])]
     }
 }
 
@@ -488,6 +493,16 @@ impl Deserializable for BaseElement {
         }
         Ok(Self::new(value))
     }
+}
+
+/// Squares the base N number of times and multiplies the result by the tail value.
+#[inline(always)]
+fn exp_acc<const N: usize>(base: BaseElement, tail: BaseElement) -> BaseElement {
+    let mut result = base;
+    for _ in 0..N {
+        result = result.square();
+    }
+    result * tail
 }
 
 // Returns a y with y < 2M and y = x mod M.
