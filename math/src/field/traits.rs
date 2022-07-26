@@ -250,7 +250,7 @@ pub trait StarkField: FieldElement<BaseField = Self> {
 ///
 /// Implementation of this trait implicitly defines the irreducible polynomial over which the
 /// extension field is defined.
-pub trait ExtensibleField<const N: usize>: StarkField {
+pub trait ExtensibleField<const N: usize>: FieldElement {
     /// Returns a product of `a` and `b` in the field defined by this extension.
     fn mul(a: [Self; N], b: [Self; N]) -> [Self; N];
 
