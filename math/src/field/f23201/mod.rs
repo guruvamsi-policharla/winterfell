@@ -1,3 +1,7 @@
+// Copyright (c) 2022 Cloudflare, Inc. and contributors.
+// Licensed under the BSD-3-Clause license found in the LICENSE file or
+// at https://opensource.org/licenses/BSD-3-Clause
+
 //! An implementation of a 23-bit prime field with modulus $2^{23} - 2^{20} + 1$.
 
 // TODO

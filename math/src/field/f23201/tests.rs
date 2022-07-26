@@ -1,5 +1,9 @@
-use super::{BaseElement, FieldElement, Serializable, StarkField, M};
-use crate::field::{CubeExtension, ExtensionOf, QuadExtension};
+// Copyright (c) 2022 Cloudflare, Inc. and contributors.
+// Licensed under the BSD-3-Clause license found in the LICENSE file or
+// at https://opensource.org/licenses/BSD-3-Clause
+
+use super::{BaseElement, ExtensibleField, FieldElement, Serializable, StarkField, M};
+use crate::field::{CubeExtension, ExtensionOf, QuadExtension, SexticExtension};
 use core::convert::TryFrom;
 use num_bigint::BigUint;
 use proptest::prelude::*;
@@ -319,6 +323,103 @@ fn cube_mul_base() {
 
     let expected = a * b;
     assert_eq!(expected, a.mul_base(b0));
+}
+
+// SEXTIC EXTENSION
+// ------------------------------------------------------------------------------------------------
+#[test]
+fn sextic_mul() {
+    // identity
+    let r: SexticExtension<BaseElement> = rand_value();
+    assert_eq!(
+        <SexticExtension<BaseElement>>::ZERO,
+        r * <SexticExtension<BaseElement>>::ZERO
+    );
+    assert_eq!(r, r * <SexticExtension<BaseElement>>::ONE);
+
+    // Test multiplication
+    // a = (4127016*v^2 + 3270160*v + 1059947)*z + 3115676*v^2 + 836267*v + 2721107
+    let a = <SexticExtension<BaseElement>>::new(
+        CubeExtension::new(
+            BaseElement::new(2721107),
+            BaseElement::new(836267),
+            BaseElement::new(3115676),
+        ),
+        CubeExtension::new(
+            BaseElement::new(1059947),
+            BaseElement::new(3270160),
+            BaseElement::new(4127016),
+        ),
+    );
+    // b = (4926374*v^2 + 6440253*v + 1218328)*z + 1709256*v^2 + 2601671*v + 5930367
+    let b = <SexticExtension<BaseElement>>::new(
+        CubeExtension::new(
+            BaseElement::new(5930367),
+            BaseElement::new(2601671),
+            BaseElement::new(1709256),
+        ),
+        CubeExtension::new(
+            BaseElement::new(1218328),
+            BaseElement::new(6440253),
+            BaseElement::new(4926374),
+        ),
+    );
+    // a * b = (2586336*v^2 + 1083175*v + 6492423)*z + 5801969*v^2 + 3727067*v + 5200583
+    let expected = <SexticExtension<BaseElement>>::new(
+        CubeExtension::new(
+            BaseElement::new(5200583),
+            BaseElement::new(3727067),
+            BaseElement::new(5801969),
+        ),
+        CubeExtension::new(
+            BaseElement::new(6492423),
+            BaseElement::new(1083175),
+            BaseElement::new(2586336),
+        ),
+    );
+    assert_eq!(expected, a * b);
+}
+
+#[test]
+fn sextic_mul_base() {
+    let a = <SexticExtension<BaseElement>>::new(rand_value(), rand_value());
+    let b0 = rand_value();
+    let b = <SexticExtension<BaseElement>>::new(b0, CubeExtension::ZERO);
+
+    let expected = a * b;
+    assert_eq!(expected, a.mul_base(b0));
+}
+
+#[test]
+fn sextic_frobenius() {
+    // a = (4127016*v^2 + 3270160*v + 1059947)*z + 3115676*v^2 + 836267*v + 2721107
+    let a = vec![
+        CubeExtension::new(
+            BaseElement::new(2721107),
+            BaseElement::new(836267),
+            BaseElement::new(3115676),
+        ),
+        CubeExtension::new(
+            BaseElement::new(1059947),
+            BaseElement::new(3270160),
+            BaseElement::new(4127016),
+        ),
+    ];
+    // a.frobenius() = a^p = (3853448*v^2 + 7084157*v + 6707040)*z + 4801732*v^2 + 3629074*v + 6291822
+    let expected = <SexticExtension<BaseElement>>::new(
+        CubeExtension::new(
+            BaseElement::new(6291822),
+            BaseElement::new(3629074),
+            BaseElement::new(4801732),
+        ),
+        CubeExtension::new(
+            BaseElement::new(6707040),
+            BaseElement::new(7084157),
+            BaseElement::new(3853448),
+        ),
+    );
+    let got = <CubeExtension<BaseElement> as ExtensibleField<2>>::frobenius([a[0], a[1]]);
+    assert_eq!(expected, SexticExtension::new(got[0], got[1]));
 }
 
 // RANDOMIZED TESTS
