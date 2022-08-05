@@ -147,6 +147,24 @@ pub trait FieldElement:
     #[must_use]
     fn conjugate(&self) -> Self;
 
+    /// Returns the multiplicative inverse of each field element.
+    #[must_use]
+    fn multiple_inv(x: &[Self]) -> Vec<Self> {
+        let n = x.len();
+        let mut prod = Vec::<Self>::with_capacity(n + 1);
+        prod.push(Self::ONE);
+        for i in 0..n {
+            prod.push(prod[i] * x[i]);
+        }
+        let mut prod_inv = prod[n].inv();
+        for i in (0..n).rev() {
+            prod[i] *= prod_inv;
+            prod_inv *= x[i];
+        }
+        prod.truncate(n);
+        return prod;
+    }
+
     // SERIALIZATION / DESERIALIZATION
     // --------------------------------------------------------------------------------------------
 
