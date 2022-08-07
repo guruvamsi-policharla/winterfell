@@ -60,7 +60,7 @@ use utils::collections::Vec;
 pub use math;
 use math::{
     fft::infer_degree,
-    fields::{CubeExtension, QuadExtension},
+    fields::{CubeExtension, QuadExtension, SexticExtension},
     ExtensibleField, FieldElement, StarkField,
 };
 
@@ -184,6 +184,16 @@ pub trait Prover {
                     HashFunction::Blake3_256 => self.generate_proof::<CubeExtension<Self::BaseField>, Blake3_256<Self::BaseField>>(trace),
                     HashFunction::Blake3_192 => self.generate_proof::<CubeExtension<Self::BaseField>, Blake3_192<Self::BaseField>>(trace),
                     HashFunction::Sha3_256 => self.generate_proof::<CubeExtension<Self::BaseField>, Sha3_256<Self::BaseField>>(trace),
+                }
+            }
+            FieldExtension::Sextic => {
+                if !<SexticExtension<Self::BaseField>>::is_supported() {
+                    return Err(ProverError::UnsupportedFieldExtension(6));
+                }
+                match self.options().hash_fn() {
+                    HashFunction::Blake3_256 => self.generate_proof::<SexticExtension<Self::BaseField>, Blake3_256<Self::BaseField>>(trace),
+                    HashFunction::Blake3_192 => self.generate_proof::<SexticExtension<Self::BaseField>, Blake3_192<Self::BaseField>>(trace),
+                    HashFunction::Sha3_256 => self.generate_proof::<SexticExtension<Self::BaseField>, Sha3_256<Self::BaseField>>(trace),
                 }
             }
         }
