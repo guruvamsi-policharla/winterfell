@@ -511,6 +511,7 @@ fn exp_acc<const N: usize>(base: BaseElement, tail: BaseElement) -> BaseElement 
 
 // Returns a y with y < 2M and y = x mod M.
 // Note that in general *not*: reduce_le_2m(reduce_le_2m(x)) == x
+#[inline(always)]
 const fn reduce_le_2m(x: u32) -> u32 {
     // Note 2²³ = 2²° - 1 mod M. So, writing  x = x₁ 2²³ + x₂ with x₂ < 2²³
     // and x₁ < 2³, we have x = y (mod M) where
