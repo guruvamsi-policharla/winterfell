@@ -116,6 +116,18 @@ fn inv() {
 }
 
 #[test]
+fn multiple_inv() {
+    // test random values
+    let x: Vec<BaseElement> = rand_vector(1000);
+    let x_inv = BaseElement::multiple_inv(&x);
+    for i in 0..x.len() {
+        let y = BaseElement::inv(x[i]);
+        assert_eq!(x_inv[i], y);
+        assert_eq!(BaseElement::ONE, x[i] * x_inv[i]);
+    }
+}
+
+#[test]
 fn conjugate() {
     let a: BaseElement = rand_value();
     let b = a.conjugate();
