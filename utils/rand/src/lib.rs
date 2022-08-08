@@ -23,11 +23,13 @@ mod internal {
     ///
     /// # Panics
     /// Panics if:
-    /// * A valid value requires over 32 bytes.
     /// * A valid value could not be generated after 1000 tries.
     pub fn rand_value<R: Randomizable>() -> R {
         for _ in 0..1000 {
-            let bytes = rand::thread_rng().gen::<[u8; 32]>();
+            let mut bytes = Vec::<u8>::new();
+            while bytes.len() < R::VALUE_SIZE {
+                bytes.extend_from_slice(&rand::thread_rng().gen::<[u8; 32]>());
+            }
             if let Some(value) = R::from_random_bytes(&bytes[..R::VALUE_SIZE]) {
                 return value;
             }

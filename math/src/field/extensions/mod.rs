@@ -9,4 +9,7 @@ pub use quadratic::QuadExtension;
 mod cubic;
 pub use cubic::CubeExtension;
 
+mod sextic;
+pub use sextic::SexticExtension;
+
 use super::{ExtensibleField, ExtensionOf, FieldElement};

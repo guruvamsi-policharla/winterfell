@@ -4,6 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::{ExtensibleField, ExtensionOf, FieldElement};
+use crate::StarkField;
 use core::{
     convert::TryFrom,
     fmt,
@@ -25,9 +26,9 @@ use utils::{
 /// field elements.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
-pub struct CubeExtension<B: ExtensibleField<3>>(B, B, B);
+pub struct CubeExtension<B: ExtensibleField<3> + StarkField>(B, B, B);
 
-impl<B: ExtensibleField<3>> CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> CubeExtension<B> {
     /// Returns a new extension element instantiated from the provided base elements.
     pub fn new(a: B, b: B, c: B) -> Self {
         Self(a, b, c)
@@ -55,7 +56,7 @@ impl<B: ExtensibleField<3>> CubeExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<3>> FieldElement for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> FieldElement for CubeExtension<B> {
     type PositiveInteger = B::PositiveInteger;
     type BaseField = B;
 
@@ -142,7 +143,7 @@ impl<B: ExtensibleField<3>> FieldElement for CubeExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<3>> ExtensionOf<B> for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> ExtensionOf<B> for CubeExtension<B> {
     #[inline(always)]
     fn mul_base(self, other: B) -> Self {
         let result = <B as ExtensibleField<3>>::mul_base([self.0, self.1, self.2], other);
@@ -150,7 +151,7 @@ impl<B: ExtensibleField<3>> ExtensionOf<B> for CubeExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<3>> Randomizable for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> Randomizable for CubeExtension<B> {
     const VALUE_SIZE: usize = Self::ELEMENT_BYTES;
 
     fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
@@ -158,7 +159,7 @@ impl<B: ExtensibleField<3>> Randomizable for CubeExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<3>> fmt::Display for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> fmt::Display for CubeExtension<B> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({}, {}, {})", self.0, self.1, self.2)
     }
@@ -167,7 +168,7 @@ impl<B: ExtensibleField<3>> fmt::Display for CubeExtension<B> {
 // OVERLOADED OPERATORS
 // ------------------------------------------------------------------------------------------------
 
-impl<B: ExtensibleField<3>> Add for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> Add for CubeExtension<B> {
     type Output = Self;
 
     #[inline]
@@ -176,14 +177,14 @@ impl<B: ExtensibleField<3>> Add for CubeExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<3>> AddAssign for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> AddAssign for CubeExtension<B> {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
     }
 }
 
-impl<B: ExtensibleField<3>> Sub for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> Sub for CubeExtension<B> {
     type Output = Self;
 
     #[inline]
@@ -192,14 +193,14 @@ impl<B: ExtensibleField<3>> Sub for CubeExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<3>> SubAssign for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> SubAssign for CubeExtension<B> {
     #[inline]
     fn sub_assign(&mut self, rhs: Self) {
         *self = *self - rhs;
     }
 }
 
-impl<B: ExtensibleField<3>> Mul for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> Mul for CubeExtension<B> {
     type Output = Self;
 
     #[inline]
@@ -210,14 +211,14 @@ impl<B: ExtensibleField<3>> Mul for CubeExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<3>> MulAssign for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> MulAssign for CubeExtension<B> {
     #[inline]
     fn mul_assign(&mut self, rhs: Self) {
         *self = *self * rhs
     }
 }
 
-impl<B: ExtensibleField<3>> Div for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> Div for CubeExtension<B> {
     type Output = Self;
 
     #[inline]
@@ -227,14 +228,14 @@ impl<B: ExtensibleField<3>> Div for CubeExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<3>> DivAssign for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> DivAssign for CubeExtension<B> {
     #[inline]
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs
     }
 }
 
-impl<B: ExtensibleField<3>> Neg for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> Neg for CubeExtension<B> {
     type Output = Self;
 
     #[inline]
@@ -246,43 +247,43 @@ impl<B: ExtensibleField<3>> Neg for CubeExtension<B> {
 // TYPE CONVERSIONS
 // ------------------------------------------------------------------------------------------------
 
-impl<B: ExtensibleField<3>> From<B> for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> From<B> for CubeExtension<B> {
     fn from(value: B) -> Self {
         Self(value, B::ZERO, B::ZERO)
     }
 }
 
-impl<B: ExtensibleField<3>> From<u128> for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> From<u128> for CubeExtension<B> {
     fn from(value: u128) -> Self {
         Self(B::from(value), B::ZERO, B::ZERO)
     }
 }
 
-impl<B: ExtensibleField<3>> From<u64> for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> From<u64> for CubeExtension<B> {
     fn from(value: u64) -> Self {
         Self(B::from(value), B::ZERO, B::ZERO)
     }
 }
 
-impl<B: ExtensibleField<3>> From<u32> for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> From<u32> for CubeExtension<B> {
     fn from(value: u32) -> Self {
         Self(B::from(value), B::ZERO, B::ZERO)
     }
 }
 
-impl<B: ExtensibleField<3>> From<u16> for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> From<u16> for CubeExtension<B> {
     fn from(value: u16) -> Self {
         Self(B::from(value), B::ZERO, B::ZERO)
     }
 }
 
-impl<B: ExtensibleField<3>> From<u8> for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> From<u8> for CubeExtension<B> {
     fn from(value: u8) -> Self {
         Self(B::from(value), B::ZERO, B::ZERO)
     }
 }
 
-impl<'a, B: ExtensibleField<3>> TryFrom<&'a [u8]> for CubeExtension<B> {
+impl<'a, B: ExtensibleField<3> + StarkField> TryFrom<&'a [u8]> for CubeExtension<B> {
     type Error = DeserializationError;
 
     /// Converts a slice of bytes into a field element; returns error if the value encoded in bytes
@@ -307,7 +308,7 @@ impl<'a, B: ExtensibleField<3>> TryFrom<&'a [u8]> for CubeExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<3>> AsBytes for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> AsBytes for CubeExtension<B> {
     fn as_bytes(&self) -> &[u8] {
         // TODO: take endianness into account
         let self_ptr: *const Self = self;
@@ -318,7 +319,7 @@ impl<B: ExtensibleField<3>> AsBytes for CubeExtension<B> {
 // SERIALIZATION / DESERIALIZATION
 // ------------------------------------------------------------------------------------------------
 
-impl<B: ExtensibleField<3>> Serializable for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> Serializable for CubeExtension<B> {
     fn write_into<W: ByteWriter>(&self, target: &mut W) {
         self.0.write_into(target);
         self.1.write_into(target);
@@ -326,12 +327,55 @@ impl<B: ExtensibleField<3>> Serializable for CubeExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<3>> Deserializable for CubeExtension<B> {
+impl<B: ExtensibleField<3> + StarkField> Deserializable for CubeExtension<B> {
     fn read_from<R: ByteReader>(source: &mut R) -> Result<Self, DeserializationError> {
         let value0 = B::read_from(source)?;
         let value1 = B::read_from(source)?;
         let value2 = B::read_from(source)?;
         Ok(Self(value0, value1, value2))
+    }
+}
+
+// QUADRATIC EXTENSION TO BUILD A SEXTIC EXTENSION
+// ================================================================================================
+
+/// Defines a quadratic extension of the cubic extension field using an irreducible polynomial x² + 3.
+/// Thus, a sextic extension element is defined as α + β * φ, where φ is a root of this polynomial,
+/// and α and β are cubic extension field elements.
+
+// Implementing the extension Fp^6 as Fp^3[x] / (x^2 + 3).
+impl<B: ExtensibleField<3> + StarkField> ExtensibleField<2> for CubeExtension<B>
+where
+    Self: FieldElement<BaseField = B>,
+{
+    #[inline(always)]
+    fn mul(a: [Self; 2], b: [Self; 2]) -> [Self; 2] {
+        let a0b0 = a[0] * b[0];
+        let a1b1 = a[1] * b[1];
+        [
+            a0b0 - a1b1 - a1b1 - a1b1,
+            (a[0] + a[1]) * (b[0] + b[1]) - a0b0 - a1b1,
+        ]
+    }
+
+    #[inline(always)]
+    fn mul_base(a: [Self; 2], b: Self) -> [Self; 2] {
+        // multiplying an extension field element by a base field element requires just 2
+        // multiplications in the cubic extension field.
+        [a[0] * b, a[1] * b]
+    }
+
+    #[inline(always)]
+    fn frobenius(x: [Self; 2]) -> [Self; 2] {
+        // given x = α + β * φ
+        // frobenius(x) = frobenius(α) + frobenius(β) * frobenius(φ)
+        //              = frobenius(α) - frobenius(β) * φ
+        let a = <B as ExtensibleField<3>>::frobenius([x[0].0, x[0].1, x[0].2]);
+        let b = <B as ExtensibleField<3>>::frobenius([x[1].0, x[1].1, x[1].2]);
+        [
+            CubeExtension::<B>::new(a[0], a[1], a[2]),
+            -CubeExtension::<B>::new(b[0], b[1], b[2]),
+        ]
     }
 }
 

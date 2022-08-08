@@ -41,7 +41,7 @@ pub use air::{
 
 pub use math;
 use math::{
-    fields::{CubeExtension, QuadExtension},
+    fields::{CubeExtension, QuadExtension, SexticExtension},
     FieldElement,
 };
 
@@ -159,6 +159,28 @@ pub fn verify<AIR: Air>(
                     let public_coin = RandomCoin::new(&public_coin_seed);
                     let channel = VerifierChannel::new(&air, proof)?;
                     perform_verification::<AIR, CubeExtension<AIR::BaseField>, Sha3_256<AIR::BaseField>>(air, channel, public_coin)
+                }
+            }
+        },
+        FieldExtension::Sextic => {
+            if !<SexticExtension<AIR::BaseField>>::is_supported() {
+                return Err(VerifierError::UnsupportedFieldExtension(6));
+            }
+            match air.options().hash_fn() {
+                HashFunction::Blake3_256 => {
+                    let public_coin = RandomCoin::new(&public_coin_seed);
+                    let channel = VerifierChannel::new(&air, proof)?;
+                    perform_verification::<AIR, SexticExtension<AIR::BaseField>, Blake3_256<AIR::BaseField>>(air, channel, public_coin)
+                }
+                HashFunction::Blake3_192 => {
+                    let public_coin = RandomCoin::new(&public_coin_seed);
+                    let channel = VerifierChannel::new(&air, proof)?;
+                    perform_verification::<AIR, SexticExtension<AIR::BaseField>, Blake3_192<AIR::BaseField>>(air, channel, public_coin)
+                }
+                HashFunction::Sha3_256 => {
+                    let public_coin = RandomCoin::new(&public_coin_seed);
+                    let channel = VerifierChannel::new(&air, proof)?;
+                    perform_verification::<AIR, SexticExtension<AIR::BaseField>, Sha3_256<AIR::BaseField>>(air, channel, public_coin)
                 }
             }
         },
