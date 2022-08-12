@@ -475,20 +475,19 @@ impl AsBytes for BaseElement {
 
 impl Serializable for BaseElement {
     fn write_into<W: ByteWriter>(&self, target: &mut W) {
-        let x = self.as_int();
-        target.write_u8(x as u8);
-        target.write_u8((x >> 8) as u8);
-        target.write_u8((x >> 16) as u8);
+        let bytes = self.as_int().to_le_bytes();
+        target.write_u8_slice(&bytes[0..ELEMENT_BYTES]);
     }
 }
 
 impl Deserializable for BaseElement {
     fn read_from<R: ByteReader>(source: &mut R) -> Result<Self, DeserializationError> {
-        // TODO we ignore the most significant bit. Is that ok?
-        let x0 = source.read_u8()?;
-        let x1 = source.read_u8()?;
-        let x2 = source.read_u8()?;
-        let value = (x0 as u32) + ((x1 as u32) << 8) + (((x2 & 127) as u32) << 16);
+        let mut buf = [0; 4];
+        let bytes = source.read_u8_vec(ELEMENT_BYTES)?;
+        for (i, bi) in bytes.into_iter().enumerate() {
+            buf[i] = bi
+        }
+        let value = u32::from_le_bytes(buf);
         if value >= M {
             return Err(DeserializationError::InvalidValue(format!(
                 "invalid field element: value {} is greater than or equal to the field modulus",
