@@ -146,8 +146,17 @@ impl<B: ExtensibleField<2> + StarkField> ExtensionOf<B> for QuadExtension<B> {
 impl<B: ExtensibleField<2> + StarkField> Randomizable for QuadExtension<B> {
     const VALUE_SIZE: usize = Self::ELEMENT_BYTES;
 
-    fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
-        Self::try_from(bytes).ok()
+    fn from_random_bytes(source: &[u8]) -> Option<Self> {
+        if source.len() >= Self::VALUE_SIZE {
+            let n = <B as Randomizable>::VALUE_SIZE;
+            let frb = <B as Randomizable>::from_random_bytes;
+            if let Some(x0) = frb(&source[0..n]) {
+                if let Some(x1) = frb(&source[n..2 * n]) {
+                    return Some(Self(x0, x1));
+                }
+            }
+        }
+        None
     }
 }
 

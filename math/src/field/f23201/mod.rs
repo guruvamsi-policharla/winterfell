@@ -213,8 +213,12 @@ impl StarkField for BaseElement {
 impl Randomizable for BaseElement {
     const VALUE_SIZE: usize = ELEMENT_BYTES;
 
-    fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
-        Self::try_from(bytes).ok()
+    fn from_random_bytes(source: &[u8]) -> Option<Self> {
+        if source.len() >= Self::VALUE_SIZE {
+            let value = ((source[2] as u32) << 16) + ((source[1] as u32) << 8) + (source[0] as u32);
+            return Some(BaseElement::new(value % M));
+        }
+        None
     }
 }
 
@@ -450,8 +454,11 @@ impl<'a> TryFrom<&'a [u8]> for BaseElement {
             )));
         }
 
-        let value =
-            (bytes[0] as u32) + ((bytes[1] as u32) << 8) + (((bytes[2] & 127) as u32) << 16);
+        let mut buf = [0; 4];
+        for (i, bi) in buf.into_iter().enumerate() {
+            buf[i] = bi;
+        }
+        let value = u32::from_le_bytes(buf);
         if value >= M {
             return Err(DeserializationError::InvalidValue(format!(
                 "invalid field element: value {} is greater than or equal to the field modulus",
