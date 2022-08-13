@@ -213,8 +213,12 @@ impl StarkField for BaseElement {
 impl Randomizable for BaseElement {
     const VALUE_SIZE: usize = ELEMENT_BYTES;
 
-    fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
-        Self::try_from(bytes).ok()
+    fn from_random_bytes(source: &[u8]) -> Option<Self> {
+        if source.len() >= Self::VALUE_SIZE {
+            let value = ((source[2] as u32) << 16) + ((source[1] as u32) << 8) + (source[0] as u32);
+            return Some(BaseElement::new(value % M));
+        }
+        None
     }
 }
 
@@ -450,8 +454,11 @@ impl<'a> TryFrom<&'a [u8]> for BaseElement {
             )));
         }
 
-        let value =
-            (bytes[0] as u32) + ((bytes[1] as u32) << 8) + (((bytes[2] & 127) as u32) << 16);
+        let mut buf = [0; 4];
+        for (i, bi) in buf.into_iter().enumerate() {
+            buf[i] = bi;
+        }
+        let value = u32::from_le_bytes(buf);
         if value >= M {
             return Err(DeserializationError::InvalidValue(format!(
                 "invalid field element: value {} is greater than or equal to the field modulus",
@@ -475,20 +482,19 @@ impl AsBytes for BaseElement {
 
 impl Serializable for BaseElement {
     fn write_into<W: ByteWriter>(&self, target: &mut W) {
-        let x = self.as_int();
-        target.write_u8(x as u8);
-        target.write_u8((x >> 8) as u8);
-        target.write_u8((x >> 16) as u8);
+        let bytes = self.as_int().to_le_bytes();
+        target.write_u8_slice(&bytes[0..ELEMENT_BYTES]);
     }
 }
 
 impl Deserializable for BaseElement {
     fn read_from<R: ByteReader>(source: &mut R) -> Result<Self, DeserializationError> {
-        // TODO we ignore the most significant bit. Is that ok?
-        let x0 = source.read_u8()?;
-        let x1 = source.read_u8()?;
-        let x2 = source.read_u8()?;
-        let value = (x0 as u32) + ((x1 as u32) << 8) + (((x2 & 127) as u32) << 16);
+        let mut buf = [0; 4];
+        let bytes = source.read_u8_vec(ELEMENT_BYTES)?;
+        for (i, bi) in bytes.into_iter().enumerate() {
+            buf[i] = bi
+        }
+        let value = u32::from_le_bytes(buf);
         if value >= M {
             return Err(DeserializationError::InvalidValue(format!(
                 "invalid field element: value {} is greater than or equal to the field modulus",

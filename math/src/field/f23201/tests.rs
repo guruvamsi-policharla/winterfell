@@ -2,12 +2,15 @@
 // Licensed under the BSD-3-Clause license found in the LICENSE file or
 // at https://opensource.org/licenses/BSD-3-Clause
 
-use super::{BaseElement, ExtensibleField, FieldElement, Serializable, StarkField, M};
+use super::{
+    BaseElement, Deserializable, ExtensibleField, FieldElement, Serializable, StarkField, M,
+};
 use crate::field::{CubeExtension, ExtensionOf, QuadExtension, SexticExtension};
 use core::convert::TryFrom;
 use num_bigint::BigUint;
 use proptest::prelude::*;
 use rand_utils::rand_value;
+use utils::{ByteReader, SliceReader};
 
 // MANUAL TESTS
 // ================================================================================================
@@ -169,6 +172,27 @@ fn try_from_slice() {
     let bytes = vec![255, 255, 255];
     let result = BaseElement::try_from(bytes.as_slice());
     assert!(result.is_err());
+}
+
+#[test]
+fn try_serializable() {
+    let a = BaseElement::new(1);
+    let mut result = Vec::new();
+    a.write_into(&mut result);
+    let expected = vec![1, 0, 0];
+    assert_eq!(expected, result);
+
+    let b = BaseElement::new(2);
+    b.write_into(&mut result);
+    let expected = vec![1, 0, 0, 2, 0, 0];
+    assert_eq!(expected, result);
+
+    let mut source = SliceReader::new(&result);
+    let c = <BaseElement as Deserializable>::read_from(&mut source).unwrap();
+    let d = <BaseElement as Deserializable>::read_from(&mut source).unwrap();
+    assert_eq!(a, c);
+    assert_eq!(b, d);
+    assert!(!source.has_more_bytes());
 }
 
 // INITIALIZATION
