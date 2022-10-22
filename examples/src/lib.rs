@@ -16,6 +16,7 @@ pub mod rescue;
 pub mod rescue_raps;
 pub mod utils;
 pub mod vdf;
+pub mod perm_raps;
 
 #[cfg(test)]
 mod tests;
@@ -140,6 +141,11 @@ pub enum ExampleType {
     /// Compute two hash chains absorbing sequences that are a permutation of each other
     #[cfg(feature = "std")]
     RescueRaps {
+        /// Length of the hash chain; must be a power of two and at least 4
+        #[structopt(short = "n", default_value = "1024")]
+        chain_length: usize,
+    },
+    PermRaps {
         /// Length of the hash chain; must be a power of two and at least 4
         #[structopt(short = "n", default_value = "1024")]
         chain_length: usize,
