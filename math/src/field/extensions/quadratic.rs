@@ -4,6 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::{ExtensibleField, ExtensionOf, FieldElement};
+use crate::StarkField;
 use core::{
     convert::TryFrom,
     fmt,
@@ -25,9 +26,9 @@ use utils::{
 /// elements.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Default)]
-pub struct QuadExtension<B: ExtensibleField<2>>(B, B);
+pub struct QuadExtension<B: ExtensibleField<2> + StarkField>(B, B);
 
-impl<B: ExtensibleField<2>> QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> QuadExtension<B> {
     /// Returns a new extension element instantiated from the provided base elements.
     pub fn new(a: B, b: B) -> Self {
         Self(a, b)
@@ -55,7 +56,7 @@ impl<B: ExtensibleField<2>> QuadExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<2>> FieldElement for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> FieldElement for QuadExtension<B> {
     type PositiveInteger = B::PositiveInteger;
     type BaseField = B;
 
@@ -134,7 +135,7 @@ impl<B: ExtensibleField<2>> FieldElement for QuadExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<2>> ExtensionOf<B> for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> ExtensionOf<B> for QuadExtension<B> {
     #[inline(always)]
     fn mul_base(self, other: B) -> Self {
         let result = <B as ExtensibleField<2>>::mul_base([self.0, self.1], other);
@@ -142,7 +143,7 @@ impl<B: ExtensibleField<2>> ExtensionOf<B> for QuadExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<2>> Randomizable for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> Randomizable for QuadExtension<B> {
     const VALUE_SIZE: usize = Self::ELEMENT_BYTES;
 
     fn from_random_bytes(bytes: &[u8]) -> Option<Self> {
@@ -150,7 +151,7 @@ impl<B: ExtensibleField<2>> Randomizable for QuadExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<2>> fmt::Display for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> fmt::Display for QuadExtension<B> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({}, {})", self.0, self.1)
     }
@@ -159,7 +160,7 @@ impl<B: ExtensibleField<2>> fmt::Display for QuadExtension<B> {
 // OVERLOADED OPERATORS
 // ------------------------------------------------------------------------------------------------
 
-impl<B: ExtensibleField<2>> Add for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> Add for QuadExtension<B> {
     type Output = Self;
 
     #[inline]
@@ -168,14 +169,14 @@ impl<B: ExtensibleField<2>> Add for QuadExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<2>> AddAssign for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> AddAssign for QuadExtension<B> {
     #[inline]
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
     }
 }
 
-impl<B: ExtensibleField<2>> Sub for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> Sub for QuadExtension<B> {
     type Output = Self;
 
     #[inline]
@@ -184,14 +185,14 @@ impl<B: ExtensibleField<2>> Sub for QuadExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<2>> SubAssign for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> SubAssign for QuadExtension<B> {
     #[inline]
     fn sub_assign(&mut self, rhs: Self) {
         *self = *self - rhs;
     }
 }
 
-impl<B: ExtensibleField<2>> Mul for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> Mul for QuadExtension<B> {
     type Output = Self;
 
     #[inline]
@@ -201,14 +202,14 @@ impl<B: ExtensibleField<2>> Mul for QuadExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<2>> MulAssign for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> MulAssign for QuadExtension<B> {
     #[inline]
     fn mul_assign(&mut self, rhs: Self) {
         *self = *self * rhs
     }
 }
 
-impl<B: ExtensibleField<2>> Div for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> Div for QuadExtension<B> {
     type Output = Self;
 
     #[inline]
@@ -218,14 +219,14 @@ impl<B: ExtensibleField<2>> Div for QuadExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<2>> DivAssign for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> DivAssign for QuadExtension<B> {
     #[inline]
     fn div_assign(&mut self, rhs: Self) {
         *self = *self / rhs
     }
 }
 
-impl<B: ExtensibleField<2>> Neg for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> Neg for QuadExtension<B> {
     type Output = Self;
 
     #[inline]
@@ -237,43 +238,43 @@ impl<B: ExtensibleField<2>> Neg for QuadExtension<B> {
 // TYPE CONVERSIONS
 // ------------------------------------------------------------------------------------------------
 
-impl<B: ExtensibleField<2>> From<B> for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> From<B> for QuadExtension<B> {
     fn from(value: B) -> Self {
         Self(value, B::ZERO)
     }
 }
 
-impl<B: ExtensibleField<2>> From<u128> for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> From<u128> for QuadExtension<B> {
     fn from(value: u128) -> Self {
         Self(B::from(value), B::ZERO)
     }
 }
 
-impl<B: ExtensibleField<2>> From<u64> for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> From<u64> for QuadExtension<B> {
     fn from(value: u64) -> Self {
         Self(B::from(value), B::ZERO)
     }
 }
 
-impl<B: ExtensibleField<2>> From<u32> for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> From<u32> for QuadExtension<B> {
     fn from(value: u32) -> Self {
         Self(B::from(value), B::ZERO)
     }
 }
 
-impl<B: ExtensibleField<2>> From<u16> for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> From<u16> for QuadExtension<B> {
     fn from(value: u16) -> Self {
         Self(B::from(value), B::ZERO)
     }
 }
 
-impl<B: ExtensibleField<2>> From<u8> for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> From<u8> for QuadExtension<B> {
     fn from(value: u8) -> Self {
         Self(B::from(value), B::ZERO)
     }
 }
 
-impl<'a, B: ExtensibleField<2>> TryFrom<&'a [u8]> for QuadExtension<B> {
+impl<'a, B: ExtensibleField<2> + StarkField> TryFrom<&'a [u8]> for QuadExtension<B> {
     type Error = DeserializationError;
 
     /// Converts a slice of bytes into a field element; returns error if the value encoded in bytes
@@ -298,7 +299,7 @@ impl<'a, B: ExtensibleField<2>> TryFrom<&'a [u8]> for QuadExtension<B> {
     }
 }
 
-impl<B: ExtensibleField<2>> AsBytes for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> AsBytes for QuadExtension<B> {
     fn as_bytes(&self) -> &[u8] {
         // TODO: take endianness into account
         let self_ptr: *const Self = self;
@@ -309,14 +310,14 @@ impl<B: ExtensibleField<2>> AsBytes for QuadExtension<B> {
 // SERIALIZATION / DESERIALIZATION
 // ------------------------------------------------------------------------------------------------
 
-impl<B: ExtensibleField<2>> Serializable for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> Serializable for QuadExtension<B> {
     fn write_into<W: ByteWriter>(&self, target: &mut W) {
         self.0.write_into(target);
         self.1.write_into(target);
     }
 }
 
-impl<B: ExtensibleField<2>> Deserializable for QuadExtension<B> {
+impl<B: ExtensibleField<2> + StarkField> Deserializable for QuadExtension<B> {
     fn read_from<R: ByteReader>(source: &mut R) -> Result<Self, DeserializationError> {
         let value0 = B::read_from(source)?;
         let value1 = B::read_from(source)?;
