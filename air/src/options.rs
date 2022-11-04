@@ -268,7 +268,7 @@ impl FieldExtension {
             Self::None => 1,
             Self::Quadratic => 2,
             Self::Cubic => 3,
-            Self::Sextic=>6,
+            Self::Sextic => 6,
         }
     }
 }

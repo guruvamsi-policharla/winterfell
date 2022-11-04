@@ -162,7 +162,7 @@ pub trait FieldElement:
             prod_inv *= x[i];
         }
         prod.truncate(n);
-        return prod;
+        prod
     }
 
     // SERIALIZATION / DESERIALIZATION
