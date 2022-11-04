@@ -347,49 +347,6 @@ impl<B: ExtensibleField<3> + StarkField> Deserializable for CubeExtension<B> {
     }
 }
 
-// QUADRATIC EXTENSION TO BUILD A SEXTIC EXTENSION
-// ================================================================================================
-
-/// Defines a quadratic extension of the cubic extension field using an irreducible polynomial x² + 3.
-/// Thus, a sextic extension element is defined as α + β * φ, where φ is a root of this polynomial,
-/// and α and β are cubic extension field elements.
-
-// Implementing the extension Fp^6 as Fp^3[x] / (x^2 + 3).
-impl<B: ExtensibleField<3> + StarkField> ExtensibleField<2> for CubeExtension<B>
-where
-    Self: FieldElement<BaseField = B>,
-{
-    #[inline(always)]
-    fn mul(a: [Self; 2], b: [Self; 2]) -> [Self; 2] {
-        let a0b0 = a[0] * b[0];
-        let a1b1 = a[1] * b[1];
-        [
-            a0b0 - a1b1 - a1b1 - a1b1,
-            (a[0] + a[1]) * (b[0] + b[1]) - a0b0 - a1b1,
-        ]
-    }
-
-    #[inline(always)]
-    fn mul_base(a: [Self; 2], b: Self) -> [Self; 2] {
-        // multiplying an extension field element by a base field element requires just 2
-        // multiplications in the cubic extension field.
-        [a[0] * b, a[1] * b]
-    }
-
-    #[inline(always)]
-    fn frobenius(x: [Self; 2]) -> [Self; 2] {
-        // given x = α + β * φ
-        // frobenius(x) = frobenius(α) + frobenius(β) * frobenius(φ)
-        //              = frobenius(α) - frobenius(β) * φ
-        let a = <B as ExtensibleField<3>>::frobenius([x[0].0, x[0].1, x[0].2]);
-        let b = <B as ExtensibleField<3>>::frobenius([x[1].0, x[1].1, x[1].2]);
-        [
-            CubeExtension::<B>::new(a[0], a[1], a[2]),
-            -CubeExtension::<B>::new(b[0], b[1], b[2]),
-        ]
-    }
-}
-
 // TESTS
 // ================================================================================================
 

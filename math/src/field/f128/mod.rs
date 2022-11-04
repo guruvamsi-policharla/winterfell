@@ -288,6 +288,30 @@ impl ExtensibleField<3> for BaseElement {
     }
 }
 
+// SEXTIC EXTENSION
+// ================================================================================================
+
+/// Sextic extension for this field is not implemented.
+impl ExtensibleField<6> for BaseElement {
+    fn mul(_a: [Self; 6], _b: [Self; 6]) -> [Self; 6] {
+        unimplemented!()
+    }
+
+    #[inline(always)]
+    fn mul_base(_a: [Self; 6], _b: Self) -> [Self; 6] {
+        unimplemented!()
+    }
+
+    #[inline(always)]
+    fn frobenius(_x: [Self; 6]) -> [Self; 6] {
+        unimplemented!()
+    }
+
+    fn is_supported() -> bool {
+        false
+    }
+}
+
 // TYPE CONVERSIONS
 // ================================================================================================
 

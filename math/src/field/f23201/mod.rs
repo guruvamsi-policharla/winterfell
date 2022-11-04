@@ -15,6 +15,7 @@
 //      4. Check if our broken elements_as_bytes is an issue
 
 use super::{ExtensibleField, FieldElement, StarkField};
+use crate::field::CubeExtension;
 use core::{
     convert::TryFrom,
     fmt::{Debug, Display, Formatter},
@@ -380,6 +381,74 @@ impl ExtensibleField<3> for BaseElement {
         let x1 = Self::mul_base(frobx1, x[1]);
         let x2 = Self::mul_base(frobx2, x[2]);
         [(x[0] + x1[0] + x2[0]), (x1[1] + x2[1]), (x1[2] + x2[2])]
+    }
+}
+
+// SEXTIC EXTENSION = QUADRATIC EXTENSION ON TOP OF A CUBIC EXTENSION
+// ================================================================================================
+
+/// Defines a quadratic extension of the cubic extension field using an irreducible polynomial x² + 3.
+/// Thus, a sextic extension element is defined as α + β * φ, where φ is a root of this polynomial,
+/// and α and β are cubic extension field elements.
+
+impl ExtensibleField<2> for CubeExtension<BaseElement> {
+    #[inline(always)]
+    fn mul(a: [Self; 2], b: [Self; 2]) -> [Self; 2] {
+        let a0b0 = a[0] * b[0];
+        let a1b1 = a[1] * b[1];
+        [
+            a0b0 - a1b1 - a1b1 - a1b1,
+            (a[0] + a[1]) * (b[0] + b[1]) - a0b0 - a1b1,
+        ]
+    }
+
+    #[inline(always)]
+    fn mul_base(a: [Self; 2], b: Self) -> [Self; 2] {
+        [a[0] * b, a[1] * b]
+    }
+
+    #[inline(always)]
+    fn frobenius(x: [Self; 2]) -> [Self; 2] {
+        [x[0].conjugate(), -x[1].conjugate()]
+    }
+}
+
+// Implementing the extension Fp^6 as Fp^3[x] / (x^2 + 3).
+impl ExtensibleField<6> for BaseElement {
+    #[inline(always)]
+    fn mul(a: [Self; 6], b: [Self; 6]) -> [Self; 6] {
+        let a0 = CubeExtension::new(a[0], a[1], a[2]);
+        let a1 = CubeExtension::new(a[3], a[4], a[5]);
+        let b0 = CubeExtension::new(b[0], b[1], b[2]);
+        let b1 = CubeExtension::new(b[3], b[4], b[5]);
+        let c = <CubeExtension<BaseElement> as ExtensibleField<2>>::mul([a0, a1], [b0, b1]);
+        let mut y: [BaseElement; 6] = Default::default();
+        y.copy_from_slice(
+            <CubeExtension<BaseElement> as FieldElement>::as_base_elements(&[c[0], c[1]]),
+        );
+        y
+    }
+
+    #[inline(always)]
+    fn mul_base(a: [Self; 6], b: Self) -> [Self; 6] {
+        // multiplying an extension field element by a base field element requires just 2
+        // multiplications in the cubic extension field.
+        [a[0] * b, a[1] * b, a[2] * b, a[3] * b, a[4] * b, a[5] * b]
+    }
+
+    #[inline(always)]
+    fn frobenius(x: [Self; 6]) -> [Self; 6] {
+        // given x = α + β * φ
+        // frobenius(x) = frobenius(α) + frobenius(β) * frobenius(φ)
+        //              = frobenius(α) - frobenius(β) * φ
+        let a0 = CubeExtension::new(x[0], x[1], x[2]);
+        let a1 = CubeExtension::new(x[3], x[4], x[5]);
+        let c = <CubeExtension<BaseElement> as ExtensibleField<2>>::frobenius([a0, a1]);
+        let mut y: [BaseElement; 6] = Default::default();
+        y.copy_from_slice(
+            <CubeExtension<BaseElement> as FieldElement>::as_base_elements(&[c[0], c[1]]),
+        );
+        y
     }
 }
 

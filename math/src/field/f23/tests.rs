@@ -3,8 +3,8 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-use super::{BaseElement, DeserializationError, FieldElement, Serializable, StarkField, M};
-use crate::field::{CubeExtension, ExtensionOf, QuadExtension};
+use super::{BaseElement, ExtensibleField, FieldElement, Serializable, StarkField, M};
+use crate::field::{CubeExtension, ExtensionOf, QuadExtension, SexticExtension};
 use core::convert::TryFrom;
 use num_bigint::BigUint;
 use proptest::prelude::*;
@@ -234,24 +234,18 @@ fn quad_conjugate() {
     let m = BaseElement::MODULUS as u32;
 
     let a = <QuadExtension<BaseElement>>::new(BaseElement::new(m - 1), BaseElement::new(3));
-    let expected = <QuadExtension<BaseElement>>::new(
-        BaseElement::new(2),
-        BaseElement::new(8380414),
-    );
+    let expected =
+        <QuadExtension<BaseElement>>::new(BaseElement::new(2), BaseElement::new(8380414));
     assert_eq!(expected, a.conjugate());
 
     let a = <QuadExtension<BaseElement>>::new(BaseElement::new(m - 3), BaseElement::new(m - 2));
-    let expected = <QuadExtension<BaseElement>>::new(
-        BaseElement::new(8380412),
-        BaseElement::new(2),
-    );
+    let expected =
+        <QuadExtension<BaseElement>>::new(BaseElement::new(8380412), BaseElement::new(2));
     assert_eq!(expected, a.conjugate());
 
     let a = <QuadExtension<BaseElement>>::new(BaseElement::new(4), BaseElement::new(7));
-    let expected = <QuadExtension<BaseElement>>::new(
-        BaseElement::new(11),
-        BaseElement::new(8380410),
-    );
+    let expected =
+        <QuadExtension<BaseElement>>::new(BaseElement::new(11), BaseElement::new(8380410));
     assert_eq!(expected, a.conjugate());
 }
 
@@ -330,6 +324,103 @@ fn cube_mul_base() {
 
     let expected = a * b;
     assert_eq!(expected, a.mul_base(b0));
+}
+
+// SEXTIC EXTENSION
+// ------------------------------------------------------------------------------------------------
+#[test]
+fn sextic_mul() {
+    // identity
+    let r: SexticExtension<BaseElement> = rand_value();
+    assert_eq!(
+        <SexticExtension<BaseElement>>::ZERO,
+        r * <SexticExtension<BaseElement>>::ZERO
+    );
+    assert_eq!(r, r * <SexticExtension<BaseElement>>::ONE);
+
+    // Test multiplication
+    // a = (4127016*v^2 + 3270160*v + 1059947)*z + 3115676*v^2 + 836267*v + 2721107
+    let a = <SexticExtension<BaseElement>>::new(
+        CubeExtension::new(
+            BaseElement::new(2721107),
+            BaseElement::new(836267),
+            BaseElement::new(3115676),
+        ),
+        CubeExtension::new(
+            BaseElement::new(1059947),
+            BaseElement::new(3270160),
+            BaseElement::new(4127016),
+        ),
+    );
+    // b = (4926374*v^2 + 6440253*v + 1218328)*z + 1709256*v^2 + 2601671*v + 5930367
+    let b = <SexticExtension<BaseElement>>::new(
+        CubeExtension::new(
+            BaseElement::new(5930367),
+            BaseElement::new(2601671),
+            BaseElement::new(1709256),
+        ),
+        CubeExtension::new(
+            BaseElement::new(1218328),
+            BaseElement::new(6440253),
+            BaseElement::new(4926374),
+        ),
+    );
+    // a * b = (1834445*v^2 + 1186640*v + 237542)*z + 3613414*v^2 + 5383661*v + 3423731
+    let expected = <SexticExtension<BaseElement>>::new(
+        CubeExtension::new(
+            BaseElement::new(4935630),
+            BaseElement::new(8137359),
+            BaseElement::new(2947803),
+        ),
+        CubeExtension::new(
+            BaseElement::new(8314408),
+            BaseElement::new(4008836),
+            BaseElement::new(4960192),
+        ),
+    );
+    assert_eq!(expected, a * b);
+}
+
+#[test]
+fn sextic_mul_base() {
+    let a = <SexticExtension<BaseElement>>::new(rand_value(), rand_value());
+    let b0 = rand_value();
+    let b = <SexticExtension<BaseElement>>::new(b0, CubeExtension::ZERO);
+
+    let expected = a * b;
+    assert_eq!(expected, a.mul_base(b0));
+}
+
+#[test]
+fn sextic_frobenius() {
+    // a = (4127016*v^2 + 3270160*v + 1059947)*z + 3115676*v^2 + 836267*v + 2721107
+    let a = vec![
+        CubeExtension::new(
+            BaseElement::new(2721107),
+            BaseElement::new(836267),
+            BaseElement::new(3115676),
+        ),
+        CubeExtension::new(
+            BaseElement::new(1059947),
+            BaseElement::new(3270160),
+            BaseElement::new(4127016),
+        ),
+    ];
+    // a.frobenius() = a^p = (1670646*v^2 + 691450*v + 7320470)*z + 512656*v^2 + 5701458*v + 2721107
+    let expected = <SexticExtension<BaseElement>>::new(
+        CubeExtension::new(
+            BaseElement::new(2721107),
+            BaseElement::new(5701458),
+            BaseElement::new(512656),
+        ),
+        CubeExtension::new(
+            BaseElement::new(7320470),
+            BaseElement::new(691450),
+            BaseElement::new(1670646),
+        ),
+    );
+    let got = <CubeExtension<BaseElement> as ExtensibleField<2>>::frobenius([a[0], a[1]]);
+    assert_eq!(expected, SexticExtension::new(got[0], got[1]));
 }
 
 // RANDOMIZED TESTS
