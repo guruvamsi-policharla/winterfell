@@ -1,7 +1,6 @@
 //! An implementation of a 23-bit prime field with modulus $2^{23} - 2^{13} + 1$
 //! used in CRYSTALS-Dilithium.
 
-
 // TODO
 //
 //  There is room for improvement:
@@ -13,8 +12,9 @@
 //      4. Check if our broken elements_as_bytes is an issue
 
 use super::{ExtensibleField, FieldElement, StarkField};
+use crate::field::CubeExtension;
 use core::{
-    convert::{TryFrom},
+    convert::TryFrom,
     fmt::{Debug, Display, Formatter},
     mem,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
@@ -219,7 +219,7 @@ impl Display for BaseElement {
 impl PartialEq for BaseElement {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        return self.as_int() == other.as_int()
+        self.as_int() == other.as_int()
     }
 }
 
@@ -251,7 +251,7 @@ impl Sub for BaseElement {
     #[inline]
     #[allow(clippy::suspicious_arithmetic_impl)]
     fn sub(self, rhs: Self) -> Self {
-        Self(reduce_le_2m(self.0 + 2*M - rhs.0))
+        Self(reduce_le_2m(self.0 + 2 * M - rhs.0))
     }
 }
 
@@ -314,10 +314,7 @@ impl ExtensibleField<2> for BaseElement {
     #[inline(always)]
     fn mul(a: [Self; 2], b: [Self; 2]) -> [Self; 2] {
         let a0b0 = a[0] * b[0];
-        [
-            a0b0 + a[1] * b[1],
-            (a[0] + a[1]) * (b[0] + b[1]) - a0b0,
-        ]
+        [a0b0 + a[1] * b[1], (a[0] + a[1]) * (b[0] + b[1]) - a0b0]
     }
 
     #[inline(always)]
@@ -346,7 +343,7 @@ impl ExtensibleField<3> for BaseElement {
         [
             a[0] * b[0] + (a[1] * b[2] + a[2] * b[1]).double(),
             a[0] * b[1] + a[1] * b[0] + (a[2] * b[2]).double(),
-            a[0] * b[2] + a[1] * b[1] + a[2] * b[0]
+            a[0] * b[2] + a[1] * b[1] + a[2] * b[0],
         ]
     }
 
@@ -357,11 +354,78 @@ impl ExtensibleField<3> for BaseElement {
 
     #[inline(always)]
     fn frobenius(x: [Self; 3]) -> [Self; 3] {
+        [x[0], Self::new(949247) * x[1], Self::new(7431169) * x[2]]
+    }
+}
+
+// SEXTIC EXTENSION = QUADRATIC EXTENSION ON TOP OF A CUBIC EXTENSION
+// ================================================================================================
+
+/// Defines a quadratic extension of the cubic extension field using an irreducible polynomial x² - 5.
+/// Thus, a sextic extension element is defined as α + β * φ, where φ is a root of this polynomial,
+/// and α and β are cubic extension field elements.
+
+impl ExtensibleField<2> for CubeExtension<BaseElement> {
+    #[inline(always)]
+    fn mul(a: [Self; 2], b: [Self; 2]) -> [Self; 2] {
+        let a0b0 = a[0] * b[0];
+        let a1b1 = a[1] * b[1];
+        let a0b0_a1b1 = a0b0 + a1b1;
+        let mut a1b1_x4 = a1b1 + a1b1;
+        a1b1_x4 += a1b1_x4;
         [
-            x[0],
-            Self::new(949247) * x[1],
-            Self::new(7431169) * x[2],
+            a0b0_a1b1 + a1b1_x4,
+            (a[0] + a[1]) * (b[0] + b[1]) - a0b0_a1b1,
         ]
+    }
+
+    #[inline(always)]
+    fn mul_base(a: [Self; 2], b: Self) -> [Self; 2] {
+        [a[0] * b, a[1] * b]
+    }
+
+    #[inline(always)]
+    fn frobenius(x: [Self; 2]) -> [Self; 2] {
+        [x[0].conjugate(), -x[1].conjugate()]
+    }
+}
+
+// Implementing the extension Fp^6 as Fp^3[x] / (x^2 - 5).
+impl ExtensibleField<6> for BaseElement {
+    #[inline(always)]
+    fn mul(a: [Self; 6], b: [Self; 6]) -> [Self; 6] {
+        let a0 = CubeExtension::new(a[0], a[1], a[2]);
+        let a1 = CubeExtension::new(a[3], a[4], a[5]);
+        let b0 = CubeExtension::new(b[0], b[1], b[2]);
+        let b1 = CubeExtension::new(b[3], b[4], b[5]);
+        let c = <CubeExtension<BaseElement> as ExtensibleField<2>>::mul([a0, a1], [b0, b1]);
+        let mut y: [BaseElement; 6] = Default::default();
+        y.copy_from_slice(
+            <CubeExtension<BaseElement> as FieldElement>::as_base_elements(&[c[0], c[1]]),
+        );
+        y
+    }
+
+    #[inline(always)]
+    fn mul_base(a: [Self; 6], b: Self) -> [Self; 6] {
+        // multiplying an extension field element by a base field element requires just 2
+        // multiplications in the cubic extension field.
+        [a[0] * b, a[1] * b, a[2] * b, a[3] * b, a[4] * b, a[5] * b]
+    }
+
+    #[inline(always)]
+    fn frobenius(x: [Self; 6]) -> [Self; 6] {
+        // given x = α + β * φ
+        // frobenius(x) = frobenius(α) + frobenius(β) * frobenius(φ)
+        //              = frobenius(α) - frobenius(β) * φ
+        let a0 = CubeExtension::new(x[0], x[1], x[2]);
+        let a1 = CubeExtension::new(x[3], x[4], x[5]);
+        let c = <CubeExtension<BaseElement> as ExtensibleField<2>>::frobenius([a0, a1]);
+        let mut y: [BaseElement; 6] = Default::default();
+        y.copy_from_slice(
+            <CubeExtension<BaseElement> as FieldElement>::as_base_elements(&[c[0], c[1]]),
+        );
+        y
     }
 }
 
@@ -436,7 +500,8 @@ impl<'a> TryFrom<&'a [u8]> for BaseElement {
             )));
         }
 
-        let value = (bytes[0] as u32) + ((bytes[1] as u32) << 8) + (((bytes[2] & 127) as u32) << 16);
+        let value =
+            (bytes[0] as u32) + ((bytes[1] as u32) << 8) + (((bytes[2] & 127) as u32) << 16);
         if value >= M {
             return Err(DeserializationError::InvalidValue(format!(
                 "invalid field element: value {} is greater than or equal to the field modulus",
@@ -497,7 +562,7 @@ fn exp_acc<const N: usize>(base: BaseElement, tail: BaseElement) -> BaseElement 
 // Returns a y with y < 2M and y = x mod M.
 // Note that in general *not*: reduce_le_2m(reduce_le_2m(x)) == x
 #[inline(always)]
-const fn reduce_le_2m(x : u32) -> u32 {
+const fn reduce_le_2m(x: u32) -> u32 {
     // Note 2²³ = 2¹³ - 1 mod M. So, writing  x = x₁ 2²³ + x₂ with x₂ < 2²³
     // and x₁ < 2⁹, we have x = y (mod M) where
     // y = x₂ + x₁ 2¹³ - x₁ ≤ 2²³ + 2¹³ < 2M.
@@ -513,5 +578,5 @@ const fn reduce_le_2m(x : u32) -> u32 {
 const fn mont_red_cst(x: u64) -> u32 {
     // 4236238847 = -(q⁻¹) mod 2³²
     let m = x.wrapping_mul(4236238847) & 0xffffffff;
-    ((x + m*(M as u64)) >> 32) as u32
+    ((x + m * (M as u64)) >> 32) as u32
 }

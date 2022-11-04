@@ -122,7 +122,7 @@ pub mod tests;
 /// return from [Prover::options] method.
 pub trait Prover {
     /// Base field for the computation described by this prover.
-    type BaseField: StarkField + ExtensibleField<2> + ExtensibleField<3>;
+    type BaseField: StarkField + ExtensibleField<2> + ExtensibleField<3> + ExtensibleField<6>;
 
     /// Algebraic intermediate representation (AIR) for the computation described by this prover.
     type Air: Air<BaseField = Self::BaseField>;
